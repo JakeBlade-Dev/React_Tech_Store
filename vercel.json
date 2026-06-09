@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://[TU-NUEVA-URL-DE-RENDER].onrender.com/api/$1"
+      "destination": "https://react-tech-store-api.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
