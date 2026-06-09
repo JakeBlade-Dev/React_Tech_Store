@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { authFetch, createProducto, deleteProducto, updateProducto } from '../utils/api'
+import { authFetch, createProducto, deleteProducto, updateProducto, reactivateProducto } from '../utils/api'
 
 const emptyForm = {
   id: null,
@@ -15,6 +15,7 @@ export default function Products(){
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
+  const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -33,6 +34,7 @@ export default function Products(){
               title: product.title ?? product.nombre ?? product.name ?? 'Producto sin nombre',
               price: product.price ?? product.precio ?? 0,
               image: product.image ?? product.image_url ?? product.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
+              eliminado: product.eliminado
             }))
           : []
 
@@ -56,31 +58,32 @@ export default function Products(){
     setForm(emptyForm)
     setActionMessage('')
     setError('')
+    setShowForm(false)
   }
 
-  function editProduct(product) {
+  function handleEdit(product) {
     setForm({
       id: product.id,
-      title: product.title || '',
-      price: product.price ?? '',
-      image: product.image || '',
+      title: product.title,
+      price: product.price,
+      image: product.image
     })
-    setActionMessage('')
     setError('')
+    setActionMessage('')
+    setShowForm(true)
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-
     try {
       setSaving(true)
       setError('')
       setActionMessage('')
 
       const payload = {
-        title: form.title.trim(),
-        price: Number(form.price),
-        image: form.image.trim(),
+        nombre: form.title.trim(),
+        precio: Number(form.price),
+        imagen: form.image.trim(),
       }
 
       if (form.id) {
@@ -98,6 +101,7 @@ export default function Products(){
         title: product.title ?? product.nombre ?? product.name ?? 'Producto sin nombre',
         price: product.price ?? product.precio ?? 0,
         image: product.image ?? product.image_url ?? product.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
+        eliminado: product.eliminado
       })) : [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar el producto')
@@ -107,26 +111,49 @@ export default function Products(){
   }
 
   async function handleDelete(product) {
-    const confirmed = window.confirm(`¿Eliminar el producto "${product.title}"?`)
+    const confirmed = window.confirm(`¿Desactivar el producto "${product.title}"?`)
     if (!confirmed) return
 
     try {
       setError('')
       setActionMessage('')
       await deleteProducto(product.id)
-      setActionMessage('Producto eliminado correctamente.')
+      setActionMessage('Producto desactivado correctamente.')
       const data = await authFetch('/productos')
       setProducts(Array.isArray(data) ? data.map((item, index) => ({
         id: item.id ?? item.product_id ?? index,
         title: item.title ?? item.nombre ?? item.name ?? 'Producto sin nombre',
         price: item.price ?? item.precio ?? 0,
         image: item.image ?? item.image_url ?? item.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
+        eliminado: item.eliminado
       })) : [])
       if (form.id === product.id) {
         resetForm()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo eliminar el producto')
+      setError(err instanceof Error ? err.message : 'No se pudo desactivar el producto')
+    }
+  }
+
+  async function handleReactivate(product) {
+    const confirmed = window.confirm(`¿Volver a activar el producto "${product.title}"?`)
+    if (!confirmed) return
+
+    try {
+      setError('')
+      setActionMessage('')
+      await reactivateProducto(product.id)
+      setActionMessage('Producto activado correctamente.')
+      const data = await authFetch('/productos')
+      setProducts(Array.isArray(data) ? data.map((item, index) => ({
+        id: item.id ?? item.product_id ?? index,
+        title: item.title ?? item.nombre ?? item.name ?? 'Producto sin nombre',
+        price: item.price ?? item.precio ?? 0,
+        image: item.image ?? item.image_url ?? item.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
+        eliminado: item.eliminado
+      })) : [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo activar el producto')
     }
   }
 
@@ -136,107 +163,138 @@ export default function Products(){
         <div>
           <p className="auth-kicker">Administración</p>
           <h2 className="mb-0">Productos</h2>
-          <p className="mb-0 admin-page-copy">Catálogo remoto de Flask con espacio suficiente para lectura y acciones.</p>
+          <p className="mb-0 admin-page-copy">Catálogo remoto con espacio suficiente para lectura y manejo de inventario.</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={resetForm}>Nuevo producto</button>
+        <div className="d-flex gap-2">
+          <button type="button" className="btn btn-primary" onClick={() => setShowForm(true)}>Nuevo producto</button>
+        </div>
       </div>
 
-      {loading && <p className="mt-3 mb-0">Cargando productos...</p>}
-      {error && <p className="text-danger mt-3 mb-0">{error}</p>}
-      {!error && actionMessage && <p className="text-success mt-3 mb-0">{actionMessage}</p>}
+      {loading && <p className="mt-3 mb-0 text-muted">Cargando productos...</p>}
+      {error && <div className="mt-3 p-4 surface-card border-danger text-danger">Error: {error}</div>}
+      {!error && actionMessage && <div className="mt-3 p-4 surface-card text-success">{actionMessage}</div>}
 
-      {!loading && !error && (
-        <div className="admin-panels-grid mt-3">
-          <div className="surface-card admin-panel">
-            <div className="admin-panel-header">
-              <div>
-                <p className="auth-kicker mb-1">Formulario</p>
-                <h3 className="mb-0">{form.id ? 'Editar producto' : 'Crear producto'}</h3>
-              </div>
+      {showForm && (
+        <div className="surface-card admin-panel mt-4">
+          <div className="admin-panel-header">
+            <div>
+              <p className="auth-kicker mb-1">Formulario de Catálogo</p>
+              <h3 className="mb-0">{form.id ? 'Editar producto' : 'Crear producto'}</h3>
             </div>
-
-            <form className="d-grid gap-3" onSubmit={handleSubmit}>
-              <div>
-                <label className="form-label" htmlFor="product-title">Nombre</label>
-                <input
-                  id="product-title"
-                  className="form-control"
-                  value={form.title}
-                  onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Nombre del producto"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="form-label" htmlFor="product-price">Precio</label>
-                <input
-                  id="product-price"
-                  className="form-control"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.price}
-                  onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="form-label" htmlFor="product-image">URL de imagen</label>
-                <input
-                  id="product-image"
-                  className="form-control"
-                  value={form.image}
-                  onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))}
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="d-flex gap-2 flex-wrap">
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Guardando...' : form.id ? 'Actualizar' : 'Crear'}
-                </button>
-                <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
-                  Limpiar
-                </button>
-              </div>
-            </form>
+            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={resetForm}>Cerrar</button>
           </div>
 
-          <div className="surface-card admin-table-card">
-            <div className="table-responsive">
-              <table className="table align-middle admin-table mb-0">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th>Precio</th>
-                    <th>Imagen</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map(product => (
-                    <tr key={product.id}>
-                      <td>{product.title}</td>
-                      <td>${Number(product.price).toLocaleString('es-CO')}</td>
-                      <td className="text-truncate" style={{ maxWidth: '240px' }}>{product.image}</td>
-                      <td>
-                        <div className="d-flex gap-2 flex-wrap">
-                          <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => editProduct(product)}>
-                            Editar
-                          </button>
-                          <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(product)}>
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <form onSubmit={handleSubmit} className="row g-3 align-items-end">
+            <div className="col-md-3">
+              <label className="form-label" htmlFor="product-title">Nombre</label>
+              <input
+                id="product-title"
+                className="form-control"
+                value={form.title}
+                onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Nombre del producto"
+                required
+              />
             </div>
+            <div className="col-md-2">
+              <label className="form-label" htmlFor="product-price">Precio</label>
+              <input
+                id="product-price"
+                className="form-control"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
+                placeholder="0.00"
+                required
+              />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label" htmlFor="product-image">URL de imagen</label>
+              <input
+                id="product-image"
+                className="form-control"
+                value={form.image}
+                onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="col-md-3 d-flex gap-2">
+              <button type="submit" className="btn btn-primary w-100" disabled={saving}>
+                {saving ? 'Guardando...' : (form.id ? 'Actualizar' : 'Crear')}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="surface-card admin-table-card mt-4">
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Imagen</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center text-muted py-4">No se encontraron productos.</td>
+                  </tr>
+                ) : (
+                  [...products]
+                    .sort((a, b) => {
+                      const aElim = a.eliminado === true || a.eliminado === "true" || a.eliminado === 1 ? 1 : 0;
+                      const bElim = b.eliminado === true || b.eliminado === "true" || b.eliminado === 1 ? 1 : 0;
+                      return aElim - bElim;
+                    })
+                    .map(product => {
+                      const isEliminado = product.eliminado === true || product.eliminado === "true" || product.eliminado === 1
+                    
+                    return (
+                      <tr key={product.id} style={{ opacity: isEliminado ? 0.6 : 1 }}>
+                        <td className="fw-medium">{product.title}</td>
+                        <td className="text-muted">${Number(product.price).toLocaleString('es-CO')}</td>
+                        <td className="text-truncate text-muted" style={{ maxWidth: '240px', fontSize: '0.85rem' }}>
+                          {product.image}
+                        </td>
+                        <td>
+                          {isEliminado ? (
+                            <span className="badge text-bg-secondary">Desactivado</span>
+                          ) : (
+                            <span className="badge text-bg-success">Activo</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-2">
+                            {!isEliminado && (
+                              <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => handleEdit(product)}>
+                                Editar
+                              </button>
+                            )}
+                            {isEliminado ? (
+                              <button type="button" className="btn btn-success btn-sm" onClick={() => handleReactivate(product)}>
+                                Activar
+                              </button>
+                            ) : (
+                              <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(product)}>
+                                Desactivar
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

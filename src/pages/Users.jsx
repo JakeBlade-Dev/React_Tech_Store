@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { authFetch, deleteUsuario, updateUsuario } from '../utils/api'
+import { authFetch, deleteUsuario, updateUsuario, reactivateUsuario } from '../utils/api'
 
 const emptyForm = {
   id: '',
@@ -42,7 +42,7 @@ export default function Users(){
 
   function editUser(user) {
     setForm({
-      id: user.id || user.firebase_uid || user.uid || '',
+      id: user.id || '',
       nombre: user.nombre || user.name || user.displayName || '',
       correo: user.correo || user.email || '',
       rol: user.rol || user.role || 'cliente',
@@ -76,18 +76,33 @@ export default function Users(){
   }
 
   async function handleDelete(user) {
-    const userId = user.id || user.firebase_uid || user.uid
-    const confirmed = window.confirm(`¿Eliminar a ${user.nombre || user.name || user.email || 'este usuario'}?`)
+    const userId = user.id
+    const confirmed = window.confirm(`¿Desactivar a ${user.nombre || user.name || user.email || 'este usuario'}?`)
     if (!confirmed) return
 
     try {
       setErr(null)
       setActionMessage('')
       await deleteUsuario(userId)
-      setActionMessage('Usuario eliminado correctamente.')
+      setActionMessage('Usuario desactivado correctamente.')
       if (form.id === userId) {
         resetForm()
       }
+      await loadUsers()
+    } catch (e) {
+      setErr(e.message)
+    }
+  }
+
+  async function handleReactivate(user) {
+    const userId = user.id
+    const confirmed = window.confirm(`¿Volver a activar a ${user.nombre || user.name || user.email || 'este usuario'}?`)
+    if (!confirmed) return
+    try {
+      setErr(null)
+      setActionMessage('')
+      await reactivateUsuario(userId)
+      setActionMessage('Usuario activado correctamente.')
       await loadUsers()
     } catch (e) {
       setErr(e.message)
@@ -102,7 +117,6 @@ export default function Users(){
           <h2 className="mb-0">Usuarios</h2>
           <p className="mb-0 admin-page-copy">Consulta las cuentas registradas, cambia su rol y elimina accesos obsoletos.</p>
         </div>
-        <button type="button" className="btn btn-outline-primary" onClick={resetForm}>Nuevo cambio</button>
       </div>
 
       {loading && <p className="mt-3 mb-0">Cargando usuarios...</p>}
@@ -177,29 +191,41 @@ export default function Users(){
                   <tr>
                     <th>Nombre</th>
                     <th>Correo</th>
-                    <th>Rol</th>
-                    <th>UID Firebase</th>
+                    <th>Estado</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {list.map(user => {
                     const userId = user.id || user.firebase_uid || user.uid
+                    const isEliminado = user.eliminado === true || user.eliminado === "true" || user.eliminado === 1
 
                     return (
-                      <tr key={userId || user.email}>
+                      <tr key={userId || user.email} style={{ opacity: isEliminado ? 0.6 : 1 }}>
                         <td>{user.nombre || user.name || user.displayName || '-'}</td>
                         <td>{user.correo || user.email || '-'}</td>
                         <td>{user.rol || user.role || 'cliente'}</td>
-                        <td>{user.firebase_uid || user.uid || '-'}</td>
+                        <td>
+                          {isEliminado ? (
+                            <span className="badge text-bg-secondary">Desactivado</span>
+                          ) : (
+                            <span className="badge text-bg-success">Activo</span>
+                          )}
+                        </td>
                         <td>
                           <div className="d-flex gap-2 flex-wrap">
-                            <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => editUser(user)}>
+                            <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => editUser(user)} disabled={isEliminado}>
                               Editar
                             </button>
-                            <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(user)}>
-                              Eliminar
-                            </button>
+                            {isEliminado ? (
+                              <button type="button" className="btn btn-success btn-sm" onClick={() => handleReactivate(user)}>
+                                Activar
+                              </button>
+                            ) : (
+                              <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(user)}>
+                                Desactivar
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

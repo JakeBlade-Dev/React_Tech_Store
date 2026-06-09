@@ -6,7 +6,6 @@ import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import Products from './pages/Products'
 import Purchases from './pages/Purchases'
-import Home from './pages/Home'
 import AdminLayout from './components/AdminLayout'
 import AdminGuard from './components/AdminGuard'
 import { AuthProvider } from './context/AuthContext'
@@ -15,7 +14,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>

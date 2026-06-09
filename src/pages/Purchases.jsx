@@ -3,13 +3,44 @@ import { authFetch, getCompras } from '../utils/api'
 
 export default function Purchases(){
   const [list, setList] = useState([])
+  const [clients, setClients] = useState([])
+  const [productsDict, setProductsDict] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedPurchase, setSelectedPurchase] = useState(null)
+  
+  const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [actionMessage, setActionMessage] = useState('')
+  const [form, setForm] = useState({
+    usuario_id: '',
+    total: ''
+  })
 
-  async function loadPurchases() {
-    const data = await getCompras()
-    setList(Array.isArray(data) ? data : [])
+  async function loadPurchasesAndClients() {
+    try {
+      const [comprasData, usuariosData, productosData] = await Promise.all([
+        authFetch('/compras'),
+        authFetch('/usuarios').catch(() => []),
+        authFetch('/productos').catch(() => [])
+      ])
+      const comprasArray = Array.isArray(comprasData) ? comprasData : []
+      setList(comprasArray)
+      
+      if (Array.isArray(usuariosData)) {
+        setClients(usuariosData.filter(u => u.eliminado !== true && (u.rol === 'cliente' || u.role === 'cliente')))
+      } else {
+        setClients([])
+      }
+      
+      if (Array.isArray(productosData)) {
+        const dict = {}
+        productosData.forEach(p => dict[p.id] = p.nombre || p.title)
+        setProductsDict(dict)
+      }
+    } catch (e) {
+      throw e
+    }
   }
 
   useEffect(() => {
@@ -19,14 +50,10 @@ export default function Purchases(){
       try {
         setLoading(true)
         setError('')
-        const data = await authFetch('/compras')
-
-        if (!active) return
-
-        setList(Array.isArray(data) ? data : [])
+        await loadPurchasesAndClients()
       } catch (err) {
         if (!active) return
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar las compras')
+        setError(err instanceof Error ? err.message : 'No se pudieron cargar los datos')
       } finally {
         if (active) setLoading(false)
       }
@@ -43,9 +70,9 @@ export default function Purchases(){
     try {
       setError('')
       setLoading(true)
-      await loadPurchases()
+      await loadPurchasesAndClients()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudieron cargar las compras')
+      setError(err instanceof Error ? err.message : 'No se pudieron cargar los datos')
     } finally {
       setLoading(false)
     }
@@ -55,24 +82,110 @@ export default function Purchases(){
     setSelectedPurchase(purchase)
   }
 
+  async function handleCreatePurchase(e) {
+    e.preventDefault()
+    try {
+      setSaving(true)
+      setError('')
+      setActionMessage('')
+
+      const payload = {
+        usuario_id: Number(form.usuario_id),
+        total: Number(form.total)
+      }
+
+      await authFetch('/compras', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+
+      setActionMessage('Compra registrada exitosamente.')
+      setForm({ usuario_id: '', total: '' })
+      setShowForm(false)
+      await loadPurchasesAndClients()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear la compra')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-page-header surface-card">
         <div>
           <p className="auth-kicker">Administración</p>
           <h2 className="mb-0">Compras</h2>
-          <p className="mb-0 admin-page-copy">Historial operativo con espacio para seguimiento y lectura rápida.</p>
+          <p className="mb-0 admin-page-copy">Historial operativo con espacio para seguimiento y creación de nuevos pedidos.</p>
         </div>
-        <button type="button" className="btn btn-outline-primary" onClick={refreshPurchases}>Refrescar</button>
+        <div className="d-flex gap-2">
+          <button type="button" className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'Cerrar Formulario' : 'Nueva Compra'}
+          </button>
+          <button type="button" className="btn btn-outline-secondary" onClick={refreshPurchases}>Refrescar</button>
+        </div>
       </div>
 
-      {loading && <p className="mt-3 mb-0">Cargando compras...</p>}
-      {error && <p className="text-danger mt-3 mb-0">{error}</p>}
+      {loading && <p className="mt-3 mb-0 text-muted">Cargando datos...</p>}
+      {error && <div className="mt-3 p-4 surface-card border-danger text-danger">Error: {error}</div>}
+      {!error && actionMessage && <div className="mt-3 p-4 surface-card text-success">{actionMessage}</div>}
+
+      {showForm && (
+        <div className="surface-card admin-panel mt-4">
+          <div className="admin-panel-header">
+            <div>
+              <p className="auth-kicker mb-1">Registro Manual</p>
+              <h3 className="mb-0">Crear Nueva Compra</h3>
+            </div>
+          </div>
+          <form onSubmit={handleCreatePurchase} className="row g-3 align-items-end">
+            <div className="col-md-5">
+              <label className="form-label" htmlFor="purchase-client">Cliente</label>
+              <select
+                id="purchase-client"
+                className="form-select"
+                value={form.usuario_id}
+                onChange={e => setForm(prev => ({ ...prev, usuario_id: e.target.value }))}
+                required
+              >
+                <option value="">-- Selecciona un cliente --</option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>
+                    {client.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-4">
+              <label className="form-label" htmlFor="purchase-total">Total</label>
+              <div className="input-group">
+                <span className="input-group-text">$</span>
+                <input
+                  id="purchase-total"
+                  className="form-control"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.total}
+                  onChange={e => setForm(prev => ({ ...prev, total: e.target.value }))}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+            </div>
+            <div className="col-md-3">
+              <button type="submit" className="btn btn-primary w-100" disabled={saving || !form.usuario_id}>
+                {saving ? 'Guardando...' : 'Registrar Compra'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {!loading && !error && (
-        <div className="surface-card admin-table-card mt-3">
+        <div className="surface-card admin-table-card mt-4">
           <div className="table-responsive">
-          <table className="table align-middle admin-table mb-0">
+          <table className="admin-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -83,19 +196,25 @@ export default function Purchases(){
               </tr>
             </thead>
             <tbody>
-              {list.map(purchase => (
-                <tr key={purchase.id || purchase.compra_id || purchase.numero}>
-                  <td>{purchase.id || purchase.compra_id || '-'}</td>
-                  <td>{purchase.cliente || purchase.usuario || purchase.correo || '-'}</td>
-                  <td>{purchase.fecha || purchase.created_at || '-'}</td>
-                  <td>{purchase.total != null ? `$${Number(purchase.total).toLocaleString('es-CO')}` : '-'}</td>
-                  <td>
-                    <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => openPurchaseDetail(purchase)}>
-                      Ver detalle
-                    </button>
-                  </td>
+              {list.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center text-muted py-4">No se encontraron compras.</td>
                 </tr>
-              ))}
+              ) : (
+                list.map(purchase => (
+                  <tr key={purchase.id || purchase.compra_id || purchase.numero}>
+                    <td className="fw-medium">{purchase.id || purchase.compra_id || '-'}</td>
+                    <td>{purchase.cliente || `ID: ${purchase.usuario_id}` || '-'}</td>
+                    <td className="text-muted">{purchase.fecha || purchase.created_at || '-'}</td>
+                    <td>{purchase.total != null ? `$${Number(purchase.total).toLocaleString('es-CO')}` : '-'}</td>
+                    <td>
+                      <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => openPurchaseDetail(purchase)}>
+                        Ver detalle
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
           </div>
@@ -103,7 +222,7 @@ export default function Purchases(){
       )}
 
       {selectedPurchase && (
-        <div className="surface-card admin-panel mt-3">
+        <div className="surface-card admin-panel mt-4 border-primary" style={{ border: '1px solid var(--border-color)' }}>
           <div className="admin-panel-header">
             <div>
               <p className="auth-kicker mb-1">Detalle</p>
@@ -115,10 +234,35 @@ export default function Purchases(){
           </div>
 
           <div className="row g-3 mt-1">
-            <div className="col-md-4"><strong>Cliente:</strong><br />{selectedPurchase.cliente || selectedPurchase.usuario || selectedPurchase.correo || '-'}</div>
-            <div className="col-md-4"><strong>Fecha:</strong><br />{selectedPurchase.fecha || selectedPurchase.created_at || '-'}</div>
-            <div className="col-md-4"><strong>Total:</strong><br />{selectedPurchase.total != null ? `$${Number(selectedPurchase.total).toLocaleString('es-CO')}` : '-'}</div>
+            <div className="col-md-4">
+              <span className="text-muted d-block mb-1" style={{ fontSize: '0.85rem' }}>Cliente</span>
+              <strong>{selectedPurchase.cliente || `ID: ${selectedPurchase.usuario_id}` || '-'}</strong>
+            </div>
+            <div className="col-md-4">
+              <span className="text-muted d-block mb-1" style={{ fontSize: '0.85rem' }}>Fecha</span>
+              <strong>{selectedPurchase.fecha || selectedPurchase.created_at || '-'}</strong>
+            </div>
+            <div className="col-md-4">
+              <span className="text-muted d-block mb-1" style={{ fontSize: '0.85rem' }}>Total</span>
+              <strong>{selectedPurchase.total != null ? `$${Number(selectedPurchase.total).toLocaleString('es-CO')}` : '-'}</strong>
+            </div>
           </div>
+          
+          {selectedPurchase.detalles && selectedPurchase.detalles.length > 0 && (
+            <div className="mt-4">
+              <span className="text-muted d-block mb-2" style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Artículos comprados</span>
+              <ul className="list-group list-group-flush border rounded">
+                {selectedPurchase.detalles.map((detalle, idx) => (
+                  <li key={idx} className="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                    <span><strong>{productsDict[detalle.producto_id] || `Producto ID: ${detalle.producto_id}`}</strong></span>
+                    <span>
+                      {detalle.cantidad} x ${Number(detalle.precio_unitario).toLocaleString('es-CO')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>

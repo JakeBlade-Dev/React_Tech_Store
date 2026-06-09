@@ -14,17 +14,27 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       if (firebaseUser) {
         const token = await firebaseUser.getIdToken()
+        localStorage.setItem('token', token)
         const storedProfile = getStoredProfile(firebaseUser.uid)
-        const backendProfile = await getUsuarioByFirebaseUid(firebaseUser.uid)
+        let backendProfile = null
+        let backendError = null
+        
+        try {
+          backendProfile = await getUsuarioByFirebaseUid(firebaseUser.uid)
+        } catch (err) {
+          console.error('Error crítico al obtener perfil del backend:', err)
+          backendError = err.message || 'Error de red'
+        }
+
         const nextUser = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName,
           ...storedProfile,
-          ...backendProfile,
+          ...(backendProfile || {}),
+          backendError
         }
 
-        localStorage.setItem('token', token)
         localStorage.setItem(`profile:${firebaseUser.uid}`, JSON.stringify(nextUser))
         setUser({
           ...nextUser,

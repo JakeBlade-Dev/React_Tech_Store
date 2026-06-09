@@ -1,29 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { login, getStoredProfile } from '../firebase'
-import { isAdminUser } from '../utils/admin'
-import { getUsuarioByFirebaseUid } from '../utils/api'
+import { login } from '../firebase'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
   const nav = useNavigate()
+  const { user } = useAuth()
+
+  // Redirigir automáticamente si ya hay usuario cargado en el contexto
+  useEffect(() => {
+    if (user) {
+      nav('/admin')
+    }
+  }, [user, nav])
 
   async function handleSubmit(e) {
     e.preventDefault()
     try {
-      const user = await login(email, password)
-      const storedProfile = getStoredProfile(user.uid)
-      const backendProfile = await getUsuarioByFirebaseUid(user.uid)
-      const nextUser = { ...user, ...storedProfile, ...backendProfile }
-
-      if (storedProfile || backendProfile) {
-        localStorage.setItem(`profile:${user.uid}`, JSON.stringify(nextUser))
-      }
-
-      nav(isAdminUser(nextUser) ? '/admin' : '/')
+      setIsLoggingIn(true)
+      setError(null)
+      // Solo hacemos login, el AuthContext detectará el cambio y actualizará el perfil
+      await login(email, password)
     } catch (err) {
+      setIsLoggingIn(false)
       setError(err.message)
     }
   }
@@ -39,7 +42,7 @@ export default function Login() {
           <Link to="/" className="auth-link">Volver al inicio</Link>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form className="d-grid gap-3" onSubmit={handleSubmit}>
           <div>
             <label className="form-label" htmlFor="login-email">Correo electrónico</label>
             <input
@@ -66,7 +69,9 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100">Entrar</button>
+          <button type="submit" className="btn btn-primary w-100" disabled={isLoggingIn}>
+            {isLoggingIn ? 'Entrando...' : 'Entrar'}
+          </button>
         </form>
 
         {error && <p className="text-danger mt-3 mb-0">{error}</p>}

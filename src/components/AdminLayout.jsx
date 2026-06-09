@@ -15,40 +15,40 @@ export default function AdminLayout() {
   return (
     <div className="container-fluid admin-shell page-shell">
       <div className="admin-layout">
-        <aside className="admin-sidebar surface-card">
-          <div className="admin-sidebar-brand">
+        <aside className="sidebar">
+          <div className="sidebar-header">
             <p className="auth-kicker mb-1">Panel administrativo</p>
             <h2 className="mb-2">Tech Store 360</h2>
-            <p className="admin-sidebar-copy mb-0">
-              Gestiona usuarios, productos y compras desde un solo lugar.
+            <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>
+              Gestiona usuarios, productos y compras.
             </p>
           </div>
 
-          <nav className="admin-nav">
-            <NavLink end to="/admin" className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
+          <nav className="d-flex flex-column" style={{ flex: 1 }}>
+            <NavLink end to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               Dashboard
             </NavLink>
-            <NavLink to="/admin/users" className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
+            <NavLink to="/admin/users" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               Usuarios
             </NavLink>
-            <NavLink to="/admin/products" className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
+            <NavLink to="/admin/products" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               Productos
             </NavLink>
-            <NavLink to="/admin/purchases" className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
+            <NavLink to="/admin/purchases" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               Compras
             </NavLink>
           </nav>
 
-          <div className="admin-session-card">
-            <p className="admin-session-label mb-1">Sesión actual</p>
-            <p className="admin-session-user mb-3">{user?.displayName || user?.email}</p>
-            <button type="button" className="btn btn-dark w-100" onClick={handleLogout}>
+          <div className="mt-auto surface-card p-3 shadow-none border bg-light text-center">
+            <p className="text-muted mb-1" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Sesión actual</p>
+            <p className="fw-medium mb-3" style={{ fontSize: '0.9rem' }}>{user?.displayName || user?.email}</p>
+            <button type="button" className="btn btn-outline-danger w-100" onClick={handleLogout}>
               Cerrar sesión
             </button>
           </div>
         </aside>
 
-        <section className="admin-content">
+        <section className="main-content">
           <Outlet />
         </section>
       </div>
