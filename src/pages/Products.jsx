@@ -4,7 +4,9 @@ import { authFetch, createProducto, deleteProducto, updateProducto, reactivatePr
 const emptyForm = {
   id: null,
   title: '',
+  descripcion: '',
   price: '',
+  stock: '',
   image: '',
 }
 
@@ -32,7 +34,9 @@ export default function Products(){
           ? data.map((product, index) => ({
               id: product.id ?? product.product_id ?? index,
               title: product.title ?? product.nombre ?? product.name ?? 'Producto sin nombre',
+              descripcion: product.descripcion ?? '',
               price: product.price ?? product.precio ?? 0,
+              stock: product.stock ?? 0,
               image: product.image ?? product.image_url ?? product.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
               eliminado: product.eliminado
             }))
@@ -65,7 +69,9 @@ export default function Products(){
     setForm({
       id: product.id,
       title: product.title,
+      descripcion: product.descripcion || '',
       price: product.price,
+      stock: product.stock || 0,
       image: product.image
     })
     setError('')
@@ -82,7 +88,9 @@ export default function Products(){
 
       const payload = {
         nombre: form.title.trim(),
+        descripcion: form.descripcion.trim(),
         precio: Number(form.price),
+        stock: Number(form.stock),
         imagen: form.image.trim(),
       }
 
@@ -99,7 +107,9 @@ export default function Products(){
       setProducts(Array.isArray(data) ? data.map((product, index) => ({
         id: product.id ?? product.product_id ?? index,
         title: product.title ?? product.nombre ?? product.name ?? 'Producto sin nombre',
+        descripcion: product.descripcion ?? '',
         price: product.price ?? product.precio ?? 0,
+        stock: product.stock ?? 0,
         image: product.image ?? product.image_url ?? product.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
         eliminado: product.eliminado
       })) : [])
@@ -123,7 +133,9 @@ export default function Products(){
       setProducts(Array.isArray(data) ? data.map((item, index) => ({
         id: item.id ?? item.product_id ?? index,
         title: item.title ?? item.nombre ?? item.name ?? 'Producto sin nombre',
+        descripcion: item.descripcion ?? '',
         price: item.price ?? item.precio ?? 0,
+        stock: item.stock ?? 0,
         image: item.image ?? item.image_url ?? item.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
         eliminado: item.eliminado
       })) : [])
@@ -148,7 +160,9 @@ export default function Products(){
       setProducts(Array.isArray(data) ? data.map((item, index) => ({
         id: item.id ?? item.product_id ?? index,
         title: item.title ?? item.nombre ?? item.name ?? 'Producto sin nombre',
+        descripcion: item.descripcion ?? '',
         price: item.price ?? item.precio ?? 0,
+        stock: item.stock ?? 0,
         image: item.image ?? item.image_url ?? item.imagen ?? 'https://via.placeholder.com/220x140?text=Producto',
         eliminado: item.eliminado
       })) : [])
@@ -185,18 +199,28 @@ export default function Products(){
           </div>
 
           <form onSubmit={handleSubmit} className="row g-3 align-items-end">
-            <div className="col-md-3">
+            <div className="col-md-2">
               <label className="form-label" htmlFor="product-title">Nombre</label>
               <input
                 id="product-title"
                 className="form-control"
                 value={form.title}
                 onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Nombre del producto"
+                placeholder="Nombre"
                 required
               />
             </div>
-            <div className="col-md-2">
+            <div className="col-md-3">
+              <label className="form-label" htmlFor="product-desc">Descripción</label>
+              <input
+                id="product-desc"
+                className="form-control"
+                value={form.descripcion}
+                onChange={e => setForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                placeholder="Descripción detallada"
+              />
+            </div>
+            <div className="col-md-1">
               <label className="form-label" htmlFor="product-price">Precio</label>
               <input
                 id="product-price"
@@ -210,7 +234,20 @@ export default function Products(){
                 required
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-md-1">
+              <label className="form-label" htmlFor="product-stock">Stock</label>
+              <input
+                id="product-stock"
+                className="form-control"
+                type="number"
+                min="0"
+                value={form.stock}
+                onChange={e => setForm(prev => ({ ...prev, stock: e.target.value }))}
+                placeholder="0"
+                required
+              />
+            </div>
+            <div className="col-md-3">
               <label className="form-label" htmlFor="product-image">URL de imagen</label>
               <input
                 id="product-image"
@@ -220,7 +257,7 @@ export default function Products(){
                 placeholder="https://..."
               />
             </div>
-            <div className="col-md-3 d-flex gap-2">
+            <div className="col-md-2 d-flex gap-2">
               <button type="submit" className="btn btn-primary w-100" disabled={saving}>
                 {saving ? 'Guardando...' : (form.id ? 'Actualizar' : 'Crear')}
               </button>
@@ -236,6 +273,7 @@ export default function Products(){
               <thead>
                 <tr>
                   <th>Producto</th>
+                  <th>Stock</th>
                   <th>Precio</th>
                   <th>Imagen</th>
                   <th>Estado</th>
@@ -259,7 +297,13 @@ export default function Products(){
                     
                     return (
                       <tr key={product.id} style={{ opacity: isEliminado ? 0.6 : 1 }}>
-                        <td className="fw-medium">{product.title}</td>
+                        <td className="fw-medium">
+                          {product.title}
+                          {product.descripcion && (
+                            <div className="text-muted" style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>{product.descripcion}</div>
+                          )}
+                        </td>
+                        <td className="text-muted">{product.stock}</td>
                         <td className="text-muted">${Number(product.price).toLocaleString('es-CO')}</td>
                         <td className="text-truncate text-muted" style={{ maxWidth: '240px', fontSize: '0.85rem' }}>
                           {product.image}

@@ -8,14 +8,6 @@ export default function Purchases(){
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedPurchase, setSelectedPurchase] = useState(null)
-  
-  const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [actionMessage, setActionMessage] = useState('')
-  const [form, setForm] = useState({
-    usuario_id: '',
-    total: ''
-  })
 
   async function loadPurchasesAndClients() {
     try {
@@ -82,34 +74,6 @@ export default function Purchases(){
     setSelectedPurchase(purchase)
   }
 
-  async function handleCreatePurchase(e) {
-    e.preventDefault()
-    try {
-      setSaving(true)
-      setError('')
-      setActionMessage('')
-
-      const payload = {
-        usuario_id: Number(form.usuario_id),
-        total: Number(form.total)
-      }
-
-      await authFetch('/compras', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-
-      setActionMessage('Compra registrada exitosamente.')
-      setForm({ usuario_id: '', total: '' })
-      setShowForm(false)
-      await loadPurchasesAndClients()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear la compra')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <div className="admin-page">
       <div className="admin-page-header surface-card">
@@ -119,68 +83,12 @@ export default function Purchases(){
           <p className="mb-0 admin-page-copy">Historial operativo con espacio para seguimiento y creación de nuevos pedidos.</p>
         </div>
         <div className="d-flex gap-2">
-          <button type="button" className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Cerrar Formulario' : 'Nueva Compra'}
-          </button>
           <button type="button" className="btn btn-outline-secondary" onClick={refreshPurchases}>Refrescar</button>
         </div>
       </div>
 
       {loading && <p className="mt-3 mb-0 text-muted">Cargando datos...</p>}
       {error && <div className="mt-3 p-4 surface-card border-danger text-danger">Error: {error}</div>}
-      {!error && actionMessage && <div className="mt-3 p-4 surface-card text-success">{actionMessage}</div>}
-
-      {showForm && (
-        <div className="surface-card admin-panel mt-4">
-          <div className="admin-panel-header">
-            <div>
-              <p className="auth-kicker mb-1">Registro Manual</p>
-              <h3 className="mb-0">Crear Nueva Compra</h3>
-            </div>
-          </div>
-          <form onSubmit={handleCreatePurchase} className="row g-3 align-items-end">
-            <div className="col-md-5">
-              <label className="form-label" htmlFor="purchase-client">Cliente</label>
-              <select
-                id="purchase-client"
-                className="form-select"
-                value={form.usuario_id}
-                onChange={e => setForm(prev => ({ ...prev, usuario_id: e.target.value }))}
-                required
-              >
-                <option value="">-- Selecciona un cliente --</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label" htmlFor="purchase-total">Total</label>
-              <div className="input-group">
-                <span className="input-group-text">$</span>
-                <input
-                  id="purchase-total"
-                  className="form-control"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.total}
-                  onChange={e => setForm(prev => ({ ...prev, total: e.target.value }))}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-            </div>
-            <div className="col-md-3">
-              <button type="submit" className="btn btn-primary w-100" disabled={saving || !form.usuario_id}>
-                {saving ? 'Guardando...' : 'Registrar Compra'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {!loading && !error && (
         <div className="surface-card admin-table-card mt-4">
