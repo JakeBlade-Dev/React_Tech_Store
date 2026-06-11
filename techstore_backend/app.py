@@ -301,8 +301,20 @@ def crear_compra():
     
     nueva = Compra(usuario_id=usuario_id, total=total)
     db.session.add(nueva)
+    db.session.flush()  # ← obtiene el ID antes del commit
+
+    for detalle in datos.get('detalles', []):
+        producto = Producto.query.get(detalle['producto_id'])
+        if producto:
+            d = DetalleCompra(
+                compra_id=nueva.id,
+                producto_id=detalle['producto_id'],
+                cantidad=detalle['cantidad'],
+                subtotal=float(producto.precio) * detalle['cantidad']
+            )
+            db.session.add(d)
+
     db.session.commit()
-    
     return jsonify({"mensaje": "Compra registrada", "id": nueva.id}), 201
 
 if __name__ == '__main__':
