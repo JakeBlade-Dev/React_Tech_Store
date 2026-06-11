@@ -71,10 +71,12 @@ class Producto(db.Model):
     __tablename__ = 'productos'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(150), nullable=False)
+    descripcion = db.Column(db.String(500))
     precio = db.Column(db.Numeric(10, 2), nullable=False)
     stock = db.Column(db.Integer, default=0)
     imagen = db.Column(db.String(255))
     eliminado = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 class Compra(db.Model):
     __tablename__ = 'compras'
@@ -207,6 +209,7 @@ def get_productos():
         resultado.append({
             "id": p.id,
             "nombre": p.nombre,
+            "descripcion": p.descripcion,
             "precio": float(p.precio),
             "stock": p.stock,
             "imagen": p.imagen,
@@ -220,6 +223,7 @@ def crear_producto():
     datos = request.json
     nuevo = Producto(
         nombre=datos['nombre'], 
+        descripcion=datos.get('descripcion'),
         precio=datos['precio'], 
         stock=datos.get('stock', 0), 
         imagen=datos.get('imagen')
@@ -240,8 +244,10 @@ def editar_producto(id):
         producto.eliminado = datos['eliminado']
     
     if 'nombre' in datos: producto.nombre = datos['nombre']
+    if 'descripcion' in datos: producto.descripcion = datos['descripcion']
     if 'precio' in datos: producto.precio = datos['precio']
     if 'stock' in datos: producto.stock = datos['stock']
+    if 'imagen' in datos: producto.imagen = datos['imagen']
     
     db.session.commit()
     return jsonify({"mensaje": "Producto actualizado"}), 200

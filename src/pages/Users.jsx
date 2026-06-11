@@ -178,7 +178,10 @@ export default function Users(){
                 </select>
               </div>
 
-                <div className="col-12 mt-4 text-end">
+                <div className="col-12 mt-4 text-end d-flex justify-content-end gap-2">
+                  <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
+                    Cancelar
+                  </button>
                   <button type="submit" className="btn btn-primary" disabled={saving || !form.id}>
                     {saving ? 'Guardando...' : 'Actualizar usuario'}
                   </button>

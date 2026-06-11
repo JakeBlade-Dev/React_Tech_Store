@@ -268,7 +268,10 @@ export default function Products(){
                 />
               </div>
 
-              <div className="mt-4 text-end">
+              <div className="mt-4 text-end d-flex justify-content-end gap-2">
+                <button type="button" className="btn btn-outline-secondary" onClick={resetForm} disabled={saving}>
+                  Cancelar
+                </button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving ? 'Guardando...' : (form.id ? 'Actualizar' : 'Crear')}
                 </button>
