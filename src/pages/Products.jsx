@@ -189,80 +189,92 @@ export default function Products(){
       {!error && actionMessage && <div className="mt-3 p-4 surface-card text-success">{actionMessage}</div>}
 
       {showForm && (
-        <div className="surface-card admin-panel mt-4">
-          <div className="admin-panel-header">
-            <div>
-              <p className="auth-kicker mb-1">Formulario de Catálogo</p>
-              <h3 className="mb-0">{form.id ? 'Editar producto' : 'Crear producto'}</h3>
+        <div className="modal-overlay" onClick={resetForm}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="admin-panel-header mb-4">
+              <div>
+                <p className="auth-kicker mb-1">Formulario</p>
+                <h3 className="mb-0">{form.id ? 'Editar producto' : 'Crear producto'}</h3>
+              </div>
+              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={resetForm}>Cerrar</button>
             </div>
-            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={resetForm}>Cerrar</button>
-          </div>
 
-          <form onSubmit={handleSubmit} className="row g-3 align-items-end">
-            <div className="col-md-2">
-              <label className="form-label" htmlFor="product-title">Nombre</label>
-              <input
-                id="product-title"
-                className="form-control"
-                value={form.title}
-                onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Nombre"
-                required
-              />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label" htmlFor="product-desc">Descripción</label>
-              <input
-                id="product-desc"
-                className="form-control"
-                value={form.descripcion}
-                onChange={e => setForm(prev => ({ ...prev, descripcion: e.target.value }))}
-                placeholder="Descripción detallada"
-              />
-            </div>
-            <div className="col-md-1">
-              <label className="form-label" htmlFor="product-price">Precio</label>
-              <input
-                id="product-price"
-                className="form-control"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.price}
-                onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div className="col-md-1">
-              <label className="form-label" htmlFor="product-stock">Stock</label>
-              <input
-                id="product-stock"
-                className="form-control"
-                type="number"
-                min="0"
-                value={form.stock}
-                onChange={e => setForm(prev => ({ ...prev, stock: e.target.value }))}
-                placeholder="0"
-                required
-              />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label" htmlFor="product-image">URL de imagen</label>
-              <input
-                id="product-image"
-                className="form-control"
-                value={form.image}
-                onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="col-md-2 d-flex gap-2">
-              <button type="submit" className="btn btn-primary w-100" disabled={saving}>
-                {saving ? 'Guardando...' : (form.id ? 'Actualizar' : 'Crear')}
-              </button>
-            </div>
-          </form>
+            <form onSubmit={handleSubmit} className="d-grid gap-3">
+              <div>
+                <label className="form-label" htmlFor="product-title">Nombre</label>
+                <input
+                  id="product-title"
+                  className="form-control"
+                  value={form.title}
+                  onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Nombre del producto"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label" htmlFor="product-desc">Descripción</label>
+                <textarea
+                  id="product-desc"
+                  className="form-control"
+                  value={form.descripcion}
+                  onChange={e => setForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                  placeholder="Descripción detallada"
+                  rows="2"
+                />
+              </div>
+
+              <div className="row g-3">
+                <div className="col-6">
+                  <label className="form-label" htmlFor="product-price">Precio</label>
+                  <div className="input-group">
+                    <span className="input-group-text">$</span>
+                    <input
+                      id="product-price"
+                      className="form-control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.price}
+                      onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="col-6">
+                  <label className="form-label" htmlFor="product-stock">Stock</label>
+                  <input
+                    id="product-stock"
+                    className="form-control"
+                    type="number"
+                    min="0"
+                    value={form.stock}
+                    onChange={e => setForm(prev => ({ ...prev, stock: e.target.value }))}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="form-label" htmlFor="product-image">URL de imagen</label>
+                <input
+                  id="product-image"
+                  className="form-control"
+                  value={form.image}
+                  onChange={e => setForm(prev => ({ ...prev, image: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="mt-4 text-end">
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? 'Guardando...' : (form.id ? 'Actualizar' : 'Crear')}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

@@ -15,6 +15,7 @@ export default function Users(){
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
+  const [showForm, setShowForm] = useState(false)
 
   async function loadUsers() {
     const data = await authFetch('/usuarios')
@@ -38,6 +39,7 @@ export default function Users(){
     setForm(emptyForm)
     setActionMessage('')
     setErr(null)
+    setShowForm(false)
   }
 
   function editUser(user) {
@@ -49,6 +51,7 @@ export default function Users(){
     })
     setActionMessage('')
     setErr(null)
+    setShowForm(true)
   }
 
   async function handleSubmit(e) {
@@ -124,14 +127,17 @@ export default function Users(){
       {!err && actionMessage && <p className="text-success mt-3 mb-0">{actionMessage}</p>}
 
       {!loading && !err && (
-        <div className="admin-panels-grid mt-3">
-          <div className="surface-card admin-panel">
-            <div className="admin-panel-header">
-              <div>
-                <p className="auth-kicker mb-1">Formulario</p>
-                <h3 className="mb-0">{form.id ? 'Editar usuario' : 'Selecciona un usuario'}</h3>
-              </div>
-            </div>
+        <div className="mt-3">
+          {showForm && (
+            <div className="modal-overlay" onClick={resetForm}>
+              <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="admin-panel-header mb-4">
+                  <div>
+                    <p className="auth-kicker mb-1">Formulario</p>
+                    <h3 className="mb-0">Editar usuario</h3>
+                  </div>
+                  <button type="button" className="btn btn-outline-secondary btn-sm" onClick={resetForm}>Cerrar</button>
+                </div>
 
             <form className="d-grid gap-3" onSubmit={handleSubmit}>
               <div>
@@ -172,19 +178,17 @@ export default function Users(){
                 </select>
               </div>
 
-              <div className="d-flex gap-2 flex-wrap">
-                <button type="submit" className="btn btn-primary" disabled={saving || !form.id}>
-                  {saving ? 'Guardando...' : 'Actualizar usuario'}
-                </button>
-                <button type="button" className="btn btn-outline-secondary" onClick={resetForm}>
-                  Limpiar
-                </button>
-              </div>
-              <small className="text-muted">Selecciona un usuario de la tabla para habilitar la actualización.</small>
-            </form>
+                <div className="col-12 mt-4 text-end">
+                  <button type="submit" className="btn btn-primary" disabled={saving || !form.id}>
+                    {saving ? 'Guardando...' : 'Actualizar usuario'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
+          )}
 
-          <div className="surface-card admin-table-card">
+          <div className="surface-card admin-table-card mt-4">
             <div className="table-responsive">
               <table className="table align-middle admin-table mb-0">
                 <thead>
