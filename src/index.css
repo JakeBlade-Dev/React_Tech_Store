@@ -112,6 +112,38 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 100;
 }
 
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem;
+  }
+  .sidebar-header {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+  }
+  .sidebar nav {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .nav-item {
+    margin-bottom: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  .main-content {
+    padding: 1rem;
+  }
+}
+
 .sidebar-header {
   padding-bottom: 1.5rem;
   margin-bottom: 1.5rem;
@@ -164,6 +196,15 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
 }
+
+@media (max-width: 768px) {
+  .admin-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+}
 .auth-kicker {
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -200,10 +241,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Tablas Premium */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  min-width: 600px; /* Asegura que la tabla no se aplaste demasiado en móviles */
 }
 .admin-table th {
   text-transform: uppercase;
@@ -242,6 +290,9 @@ h1, h2, h3, h4, h5, h6 {
   gap: 1.5rem;
   align-items: start;
 }
+.admin-panels-grid.dashboard {
+  grid-template-columns: 1fr;
+}
 @media (max-width: 1024px) {
   .admin-panels-grid {
     grid-template-columns: 1fr;
@@ -249,8 +300,31 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Utilidades para flexbox si se usaban en bootstrap */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -0.5rem;
+  margin-left: -0.5rem;
+}
+.row > * {
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
+  width: 100%;
+}
+.col-6 { flex: 0 0 auto; width: 50%; }
+.col-12 { flex: 0 0 auto; width: 100%; }
+
+@media (max-width: 768px) {
+  .col-6 { width: 100%; }
+}
+
+.text-center { text-align: center; }
+.text-end { text-align: right; }
+.py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
 .d-flex { display: flex; }
 .justify-content-between { justify-content: space-between; }
+.justify-content-end { justify-content: flex-end; }
 .align-items-center { align-items: center; }
 .gap-2 { gap: 0.5rem; }
 .gap-3 { gap: 1rem; }
