@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { authFetch, getCompras } from '../utils/api'
+import MaintenanceState from '../components/MaintenanceState'
 
 export default function Purchases(){
   const [list, setList] = useState([])
