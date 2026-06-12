@@ -83,7 +83,6 @@ export default function Purchases(){
           <h2 className="mb-0">Compras</h2>
           <p className="mb-0 admin-page-copy">Historial operativo con espacio para seguimiento y creación de nuevos pedidos.</p>
         </div>
-        </div>
       </div>
 
       {loading && <p className="mt-3 mb-0 text-muted">Cargando datos...</p>}
