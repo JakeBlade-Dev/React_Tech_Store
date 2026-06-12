@@ -22,6 +22,29 @@ function getCached(key) {
   return cached.data
 }
 
+// Cola de peticiones globales para evitar saturar el Nginx o Vercel con 429
+const requestQueue = []
+let isProcessingQueue = false
+
+async function processQueue() {
+  if (isProcessingQueue || requestQueue.length === 0) return
+  isProcessingQueue = true
+  
+  while (requestQueue.length > 0) {
+    const { fetchFunction, resolve, reject } = requestQueue.shift()
+    try {
+      const result = await fetchFunction()
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }
+    // Pequeño delay entre peticiones para engañar al rate limit (300ms)
+    await new Promise(r => setTimeout(r, 300))
+  }
+  
+  isProcessingQueue = false
+}
+
 export async function authFetch(url, options = {}, retries = 3) {
   const token = localStorage.getItem('token')
   const headers = { ...(options.headers || {}), 'Content-Type': 'application/json' }
@@ -31,41 +54,38 @@ export async function authFetch(url, options = {}, retries = 3) {
   const isQuery = method === 'GET'
   const cacheKey = url
 
-  // 1. Limpiar caché en mutaciones para asegurar que los datos estén frescos al volver a consultar
   if (!isQuery) {
     fetchCache.clear()
   }
 
-  // 2. Si es GET y tenemos caché vigente, retornarlo inmediatamente
   if (isQuery) {
     const cachedData = getCached(cacheKey)
     if (cachedData) return cachedData
   }
 
-  // 3. Deduplicación: Si ya hay una petición IDÉNTICA en curso, esperamos a que termine
   const requestKey = `${method}:${url}`
   if (activeRequests.has(requestKey)) {
     return activeRequests.get(requestKey)
   }
 
-  // 4. Hacer la petición real (envuelta en Promesa para guardar en activeRequests)
-  const fetchPromise = (async () => {
-    try {
+  // 4. Encolar la petición real en lugar de dispararla inmediatamente
+  const fetchPromise = new Promise((resolve, reject) => {
+    
+    const fetchFunction = async () => {
       let currentRetries = retries;
       let res;
       
       while (currentRetries >= 0) {
         res = await fetch(resolveApiUrl(url), { ...options, headers })
         
-        // Si el proxy responde 429 (Too Many Requests), esperar y reintentar si quedan intentos
         if (res.status === 429 && currentRetries > 0) {
-          console.warn(`HTTP 429 detectado para ${url}. Reintentando en 2s... (Quedan ${currentRetries} intentos)`)
-          await new Promise(r => setTimeout(r, 2000))
+          // Jitter aleatorio entre 1s y 3s para evitar colisiones sincronizadas
+          const delay = 1000 + Math.random() * 2000;
+          console.warn(`HTTP 429 detectado para ${url}. Reintentando en ${Math.round(delay)}ms... (Quedan ${currentRetries} intentos)`)
+          await new Promise(r => setTimeout(r, delay))
           currentRetries--
-          continue // vuelve a intentar el fetch
+          continue 
         }
-        
-        // Si no es 429, o si ya no quedan reintentos, salimos del ciclo
         break
       }
 
@@ -73,18 +93,18 @@ export async function authFetch(url, options = {}, retries = 3) {
       
       const data = await res.json()
       
-      // Guardar en caché si es GET
       if (isQuery) {
         fetchCache.set(cacheKey, { data, timestamp: Date.now() })
       }
-      
       return data
-      throw error;
-    } finally {
-      // Remover de activeRequests al terminar
-      activeRequests.delete(requestKey)
     }
-  })()
+
+    requestQueue.push({ fetchFunction, resolve, reject })
+    processQueue() // Intenta procesar la cola
+    
+  }).finally(() => {
+    activeRequests.delete(requestKey)
+  })
 
   activeRequests.set(requestKey, fetchPromise)
   return fetchPromise
