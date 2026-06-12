@@ -83,8 +83,6 @@ export default function Purchases(){
           <h2 className="mb-0">Compras</h2>
           <p className="mb-0 admin-page-copy">Historial operativo con espacio para seguimiento y creación de nuevos pedidos.</p>
         </div>
-        <div className="d-flex gap-2">
-          <button type="button" className="btn btn-outline-secondary" onClick={refreshPurchases}>Refrescar</button>
         </div>
       </div>
 
