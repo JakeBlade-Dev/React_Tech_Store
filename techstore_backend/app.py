@@ -314,6 +314,14 @@ def crear_compra():
     for detalle in datos.get('detalles', []):
         producto = Producto.query.get(detalle['producto_id'])
         if producto:
+            # 1. Validar si hay stock disponible antes de restar
+            if producto.stock < detalle['cantidad']:
+                db.session.rollback()
+                return jsonify({"error": f"Stock insuficiente para el producto: {producto.nombre}"}), 400
+                
+            # 2. Disminuir el stock en la base de datos
+            producto.stock -= detalle['cantidad']
+            
             d = DetalleCompra(
                 compra_id=nueva.id,
                 producto_id=detalle['producto_id'],
