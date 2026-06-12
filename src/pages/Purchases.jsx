@@ -130,12 +130,12 @@ export default function Purchases(){
       {selectedPurchase && (
         <div className="modal-overlay" onClick={() => setSelectedPurchase(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="admin-panel-header mb-4">
+            <div className="d-flex justify-content-between align-items-start mb-4">
               <div>
                 <p className="auth-kicker mb-1">Detalle</p>
                 <h3 className="mb-0">Compra #{selectedPurchase.id || selectedPurchase.compra_id || '-'}</h3>
               </div>
-              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedPurchase(null)}>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => setSelectedPurchase(null)}>
                 Cerrar
               </button>
             </div>
