@@ -9,6 +9,7 @@ import Purchases from './pages/Purchases'
 import AdminLayout from './components/AdminLayout'
 import AdminGuard from './components/AdminGuard'
 import { AuthProvider } from './context/AuthContext'
+import ServerBadge from './components/ServerBadge'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/products" element={<Navigate to="/admin/products" replace />} />
         <Route path="/purchases" element={<Navigate to="/admin/purchases" replace />} />
       </Routes>
+      <ServerBadge />
     </AuthProvider>
   )
 }
