@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { authFetch, deleteUsuario, updateUsuario, reactivateUsuario } from '../utils/api'
 import MaintenanceState from '../components/MaintenanceState'
-import MaintenanceState from '../components/MaintenanceState'
 
 const emptyForm = {
   id: '',
