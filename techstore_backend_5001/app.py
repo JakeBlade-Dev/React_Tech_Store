@@ -13,9 +13,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Configuración de Supabase (PostgreSQL)
-# Usaremos las credenciales directas proporcionadas
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres.lmfqkenmrinyywvnldks:distribuidas_techstore@aws-1-us-west-2.pooler.supabase.com:5432/postgres"
+# Configuración de Aiven (PostgreSQL Réplica)
+# Usaremos variables de entorno por seguridad (Render Environment Variables)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', "")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -99,7 +99,7 @@ class DetalleCompra(db.Model):
 # --- RUTAS DE LA API ---
 @app.route('/api/', methods=['GET'])
 def index():
-    return jsonify({"mensaje": "API TechStore 360 funcionando correctamente"})
+    return jsonify({"mensaje": "API TechStore 360 funcionando correctamente (Servidor de Respaldo - Aiven)"})
 
 # USUARIOS
 @app.route('/api/usuarios', methods=['GET'])
