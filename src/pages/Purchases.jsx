@@ -88,7 +88,7 @@ export default function Purchases(){
       </div>
 
       {loading && <p className="mt-3 mb-0 text-muted">Cargando datos...</p>}
-      {error && <div className="mt-3 p-4 surface-card border-danger text-danger">Error: {error}</div>}
+      {error ? <MaintenanceState onRetry={() => { setLoading(true); fetchPurchases().finally(() => setLoading(false)) }} /> : null}
 
       {!loading && !error && (
         <div className="surface-card admin-table-card mt-4">

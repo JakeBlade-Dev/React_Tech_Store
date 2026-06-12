@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { authFetch, deleteUsuario, updateUsuario, reactivateUsuario } from '../utils/api'
+import MaintenanceState from '../components/MaintenanceState'
+import MaintenanceState from '../components/MaintenanceState'
 
 const emptyForm = {
   id: '',
@@ -123,7 +125,7 @@ export default function Users(){
       </div>
 
       {loading && <p className="mt-3 mb-0">Cargando usuarios...</p>}
-      {err && <p className="text-danger mt-3 mb-0">{err}</p>}
+      {err && <MaintenanceState onRetry={loadUsers} />}
       {!err && actionMessage && <p className="text-success mt-3 mb-0">{actionMessage}</p>}
 
       {!loading && !err && (

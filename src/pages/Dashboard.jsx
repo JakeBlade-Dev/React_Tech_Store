@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { authFetch } from '../utils/api'
+import MaintenanceState from '../components/MaintenanceState'
 
 export default function Dashboard(){
   const [stats, setStats] = useState({ users: 0, products: 0, purchases: 0, totalRevenue: 0 })

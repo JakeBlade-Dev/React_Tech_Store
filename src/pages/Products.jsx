@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { authFetch, createProducto, deleteProducto, updateProducto, reactivateProducto } from '../utils/api'
+import MaintenanceState from '../components/MaintenanceState'
 
 const emptyForm = {
   id: null,
@@ -185,7 +186,7 @@ export default function Products(){
       </div>
 
       {loading && <p className="mt-3 mb-0 text-muted">Cargando productos...</p>}
-      {error && <div className="mt-3 p-4 surface-card border-danger text-danger">Error: {error}</div>}
+      {error ? <MaintenanceState onRetry={() => { setLoading(true); loadProducts().finally(() => setLoading(false)) }} /> : null}
       {!error && actionMessage && <div className="mt-3 p-4 surface-card text-success">{actionMessage}</div>}
 
       {showForm && (
