@@ -128,16 +128,17 @@ export default function Purchases(){
       )}
 
       {selectedPurchase && (
-        <div className="surface-card admin-panel mt-4 border-primary" style={{ border: '1px solid var(--border-color)' }}>
-          <div className="admin-panel-header">
-            <div>
-              <p className="auth-kicker mb-1">Detalle</p>
-              <h3 className="mb-0">Compra #{selectedPurchase.id || selectedPurchase.compra_id || '-'}</h3>
+        <div className="modal-overlay" onClick={() => setSelectedPurchase(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="admin-panel-header mb-4">
+              <div>
+                <p className="auth-kicker mb-1">Detalle</p>
+                <h3 className="mb-0">Compra #{selectedPurchase.id || selectedPurchase.compra_id || '-'}</h3>
+              </div>
+              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedPurchase(null)}>
+                Cerrar
+              </button>
             </div>
-            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setSelectedPurchase(null)}>
-              Cerrar
-            </button>
-          </div>
 
           <div className="row g-3 mt-1">
             <div className="col-md-4">
@@ -169,6 +170,7 @@ export default function Purchases(){
               </ul>
             </div>
           )}
+          </div>
         </div>
       )}
     </div>
