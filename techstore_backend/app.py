@@ -120,10 +120,10 @@ def get_usuarios():
         # FIX: created_at.strftime bug fixed by checking type
         fecha = ""
         if u.created_at:
-            if isinstance(u.created_at, str):
-                fecha = u.created_at
-            else:
+            if hasattr(u.created_at, 'strftime'):
                 fecha = u.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                fecha = str(u.created_at)
 
         resultado.append({
             "id": u.id,
@@ -283,8 +283,10 @@ def get_compras():
             
         fecha = ""
         if c.created_at:
-            if isinstance(c.created_at, str): fecha = c.created_at
-            else: fecha = c.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            if hasattr(c.created_at, 'strftime'):
+                fecha = c.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                fecha = str(c.created_at)
 
         resultado.append({
             "id": c.id,
